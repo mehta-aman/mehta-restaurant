@@ -11,6 +11,7 @@ class RestaurantTable {
   final String? activeOrderId;
   final int guestCount;
   final DateTime? openedAt;
+  final bool isEnabled;
 
   RestaurantTable({
     required this.id,
@@ -20,6 +21,7 @@ class RestaurantTable {
     this.activeOrderId,
     this.guestCount = 0,
     this.openedAt,
+    this.isEnabled = true,
   });
 
   RestaurantTable copyWith({
@@ -27,6 +29,7 @@ class RestaurantTable {
     String? activeOrderId,
     int? guestCount,
     DateTime? openedAt,
+    bool? isEnabled,
   }) {
     return RestaurantTable(
       id: id,
@@ -36,6 +39,7 @@ class RestaurantTable {
       activeOrderId: activeOrderId ?? this.activeOrderId,
       guestCount: guestCount ?? this.guestCount,
       openedAt: openedAt ?? this.openedAt,
+      isEnabled: isEnabled ?? this.isEnabled,
     );
   }
 }

@@ -4,6 +4,7 @@ import 'core/theme.dart';
 import 'models/models.dart';
 import 'features/accounts/accounts_screen.dart';
 import 'features/kitchen/kitchen_screen.dart';
+import 'features/menu/menu_management_screen.dart';
 import 'features/reports/reports_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/tables/tables_screen.dart';
@@ -45,6 +46,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   final List<Widget> _screens = const [
     TablesScreen(),
     KitchenScreen(),
+    MenuManagementScreen(),
     AccountsScreen(),
     ReportsScreen(),
     SettingsScreen(),
@@ -109,6 +111,11 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                   label: const Text('Kitchen (KDS)'),
                 ),
                 const NavigationRailDestination(
+                  icon: Icon(Icons.restaurant_menu_outlined),
+                  selectedIcon: Icon(Icons.restaurant_menu),
+                  label: Text('Menu Editor'),
+                ),
+                const NavigationRailDestination(
                   icon: Icon(Icons.account_balance_wallet_outlined),
                   selectedIcon: Icon(Icons.account_balance_wallet),
                   label: Text('Credit Ledger'),
@@ -156,6 +163,11 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
               child: const Icon(Icons.soup_kitchen),
             ),
             label: 'Kitchen',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.restaurant_menu_outlined),
+            selectedIcon: Icon(Icons.restaurant_menu),
+            label: 'Menu',
           ),
           const NavigationDestination(
             icon: Icon(Icons.account_balance_wallet_outlined),

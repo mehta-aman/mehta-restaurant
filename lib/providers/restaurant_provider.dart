@@ -91,6 +91,37 @@ class TablesNotifier extends Notifier<List<RestaurantTable>> {
             status: TableState.available,
             guestCount: 0,
             activeOrderId: null,
+            openedAt: null,
+            isEnabled: table.isEnabled,
+          )
+        else
+          table,
+    ];
+  }
+
+  void toggleTableEnabled(String tableNumber) {
+    state = [
+      for (final table in state)
+        if (table.tableNumber == tableNumber)
+          table.copyWith(isEnabled: !table.isEnabled)
+        else
+          table,
+    ];
+  }
+
+  void forceResetTable(String tableNumber) {
+    state = [
+      for (final table in state)
+        if (table.tableNumber == tableNumber)
+          RestaurantTable(
+            id: table.id,
+            tableNumber: table.tableNumber,
+            capacity: table.capacity,
+            status: TableState.available,
+            guestCount: 0,
+            activeOrderId: null,
+            openedAt: null,
+            isEnabled: table.isEnabled,
           )
         else
           table,
@@ -100,64 +131,103 @@ class TablesNotifier extends Notifier<List<RestaurantTable>> {
 
 final tablesProvider = NotifierProvider<TablesNotifier, List<RestaurantTable>>(TablesNotifier.new);
 
-// --- 3. MENU PROVIDER (~30 Items + Packaged Goods) ---
-final menuProvider = Provider<List<MenuItem>>((ref) {
-  return [
-    // Starters
-    MenuItem(id: '1', name: 'Paneer Tikka', sku: 'STR-01', price: 220, category: 'Starters'),
-    MenuItem(id: '2', name: 'Hara Bhara Kabab', sku: 'STR-02', price: 180, category: 'Starters'),
-    MenuItem(id: '3', name: 'Veg Crispy', sku: 'STR-03', price: 190, category: 'Starters'),
-    MenuItem(id: '4', name: 'Veg Spring Roll', sku: 'STR-04', price: 160, category: 'Starters'),
-    MenuItem(id: '5', name: 'Crispy Corn Salt & Pepper', sku: 'STR-05', price: 170, category: 'Starters'),
-    MenuItem(id: '6', name: 'Chilli Paneer Dry', sku: 'STR-06', price: 210, category: 'Starters'),
+// --- 3. DYNAMIC MENU NOTIFIER PROVIDER (Full Add/Edit/Delete/Stock Control) ---
+class MenuNotifier extends Notifier<List<MenuItem>> {
+  @override
+  List<MenuItem> build() {
+    return [
+      // Starters
+      MenuItem(id: '1', name: 'Paneer Tikka', sku: 'STR-01', price: 220, category: 'Starters'),
+      MenuItem(id: '2', name: 'Hara Bhara Kabab', sku: 'STR-02', price: 180, category: 'Starters'),
+      MenuItem(id: '3', name: 'Veg Crispy', sku: 'STR-03', price: 190, category: 'Starters'),
+      MenuItem(id: '4', name: 'Veg Spring Roll', sku: 'STR-04', price: 160, category: 'Starters'),
+      MenuItem(id: '5', name: 'Crispy Corn Salt & Pepper', sku: 'STR-05', price: 170, category: 'Starters'),
+      MenuItem(id: '6', name: 'Chilli Paneer Dry', sku: 'STR-06', price: 210, category: 'Starters'),
 
-    // Main Course
-    MenuItem(id: '7', name: 'Paneer Butter Masala', sku: 'MNC-01', price: 240, category: 'Main Course'),
-    MenuItem(id: '8', name: 'Kadhai Paneer', sku: 'MNC-02', price: 250, category: 'Main Course'),
-    MenuItem(id: '9', name: 'Shahi Paneer', sku: 'MNC-03', price: 260, category: 'Main Course'),
-    MenuItem(id: '10', name: 'Dal Makhani', sku: 'MNC-04', price: 210, category: 'Main Course'),
-    MenuItem(id: '11', name: 'Dal Tadka (Yellow)', sku: 'MNC-05', price: 170, category: 'Main Course'),
-    MenuItem(id: '12', name: 'Mix Vegetable', sku: 'MNC-06', price: 190, category: 'Main Course'),
-    MenuItem(id: '13', name: 'Chana Masala', sku: 'MNC-07', price: 180, category: 'Main Course'),
-    MenuItem(id: '14', name: 'Malai Kofta', sku: 'MNC-08', price: 260, category: 'Main Course'),
-    MenuItem(id: '15', name: 'Mushroom Do Pyaza', sku: 'MNC-09', price: 240, category: 'Main Course'),
-    MenuItem(id: '16', name: 'Aloo Gobi Adraki', sku: 'MNC-10', price: 160, category: 'Main Course'),
+      // Main Course
+      MenuItem(id: '7', name: 'Paneer Butter Masala', sku: 'MNC-01', price: 240, category: 'Main Course'),
+      MenuItem(id: '8', name: 'Kadhai Paneer', sku: 'MNC-02', price: 250, category: 'Main Course'),
+      MenuItem(id: '9', name: 'Shahi Paneer', sku: 'MNC-03', price: 260, category: 'Main Course'),
+      MenuItem(id: '10', name: 'Dal Makhani', sku: 'MNC-04', price: 210, category: 'Main Course'),
+      MenuItem(id: '11', name: 'Dal Tadka (Yellow)', sku: 'MNC-05', price: 170, category: 'Main Course'),
+      MenuItem(id: '12', name: 'Mix Vegetable', sku: 'MNC-06', price: 190, category: 'Main Course'),
+      MenuItem(id: '13', name: 'Chana Masala', sku: 'MNC-07', price: 180, category: 'Main Course'),
+      MenuItem(id: '14', name: 'Malai Kofta', sku: 'MNC-08', price: 260, category: 'Main Course'),
+      MenuItem(id: '15', name: 'Mushroom Do Pyaza', sku: 'MNC-09', price: 240, category: 'Main Course'),
+      MenuItem(id: '16', name: 'Aloo Gobi Adraki', sku: 'MNC-10', price: 160, category: 'Main Course'),
 
-    // Breads & Roti
-    MenuItem(id: '17', name: 'Tandoori Roti Plain', sku: 'BRD-01', price: 15, category: 'Breads'),
-    MenuItem(id: '18', name: 'Tandoori Butter Roti', sku: 'BRD-02', price: 20, category: 'Breads'),
-    MenuItem(id: '19', name: 'Butter Naan', sku: 'BRD-03', price: 45, category: 'Breads'),
-    MenuItem(id: '20', name: 'Garlic Naan', sku: 'BRD-04', price: 60, category: 'Breads'),
-    MenuItem(id: '21', name: 'Lachha Paratha', sku: 'BRD-05', price: 40, category: 'Breads'),
-    MenuItem(id: '22', name: 'Missi Roti', sku: 'BRD-06', price: 35, category: 'Breads'),
+      // Breads & Roti
+      MenuItem(id: '17', name: 'Tandoori Roti Plain', sku: 'BRD-01', price: 15, category: 'Breads'),
+      MenuItem(id: '18', name: 'Tandoori Butter Roti', sku: 'BRD-02', price: 20, category: 'Breads'),
+      MenuItem(id: '19', name: 'Butter Naan', sku: 'BRD-03', price: 45, category: 'Breads'),
+      MenuItem(id: '20', name: 'Garlic Naan', sku: 'BRD-04', price: 60, category: 'Breads'),
+      MenuItem(id: '21', name: 'Lachha Paratha', sku: 'BRD-05', price: 40, category: 'Breads'),
+      MenuItem(id: '22', name: 'Missi Roti', sku: 'BRD-06', price: 35, category: 'Breads'),
 
-    // Rice & Biryani
-    MenuItem(id: '23', name: 'Steamed Plain Rice', sku: 'RIC-01', price: 110, category: 'Rice'),
-    MenuItem(id: '24', name: 'Jeera Rice', sku: 'RIC-02', price: 130, category: 'Rice'),
-    MenuItem(id: '25', name: 'Veg Pulao', sku: 'RIC-03', price: 160, category: 'Rice'),
-    MenuItem(id: '26', name: 'Special Veg Biryani with Raita', sku: 'RIC-04', price: 220, category: 'Rice'),
+      // Rice & Biryani
+      MenuItem(id: '23', name: 'Steamed Plain Rice', sku: 'RIC-01', price: 110, category: 'Rice'),
+      MenuItem(id: '24', name: 'Jeera Rice', sku: 'RIC-02', price: 130, category: 'Rice'),
+      MenuItem(id: '25', name: 'Veg Pulao', sku: 'RIC-03', price: 160, category: 'Rice'),
+      MenuItem(id: '26', name: 'Special Veg Biryani with Raita', sku: 'RIC-04', price: 220, category: 'Rice'),
 
-    // Desserts
-    MenuItem(id: '27', name: 'Gulab Jamun (2 pcs)', sku: 'DES-01', price: 60, category: 'Desserts'),
-    MenuItem(id: '28', name: 'Rasgulla (2 pcs)', sku: 'DES-02', price: 60, category: 'Desserts'),
-    MenuItem(id: '29', name: 'Vanilla Ice Cream', sku: 'DES-03', price: 50, category: 'Desserts'),
-    MenuItem(id: '30', name: 'Kesar Pista Kulfi', sku: 'DES-04', price: 70, category: 'Desserts'),
+      // Desserts
+      MenuItem(id: '27', name: 'Gulab Jamun (2 pcs)', sku: 'DES-01', price: 60, category: 'Desserts'),
+      MenuItem(id: '28', name: 'Rasgulla (2 pcs)', sku: 'DES-02', price: 60, category: 'Desserts'),
+      MenuItem(id: '29', name: 'Vanilla Ice Cream', sku: 'DES-03', price: 50, category: 'Desserts'),
+      MenuItem(id: '30', name: 'Kesar Pista Kulfi', sku: 'DES-04', price: 70, category: 'Desserts'),
 
-    // Packaged Snacks & Namkeen (Bikaji)
-    MenuItem(id: '31', name: 'Bikaji Bhujia (200g)', sku: 'PKG-01', price: 65, category: 'Packaged Snacks', isPackaged: true),
-    MenuItem(id: '32', name: 'Bikaji All-in-One (200g)', sku: 'PKG-02', price: 65, category: 'Packaged Snacks', isPackaged: true),
-    MenuItem(id: '33', name: 'Bikaji Navratna Mixture', sku: 'PKG-03', price: 65, category: 'Packaged Snacks', isPackaged: true),
-    MenuItem(id: '34', name: 'Parle-G Biscuit Pack', sku: 'PKG-04', price: 10, category: 'Packaged Snacks', isPackaged: true),
-    MenuItem(id: '35', name: 'Britannia Good Day Butter', sku: 'PKG-05', price: 25, category: 'Packaged Snacks', isPackaged: true),
+      // Packaged Snacks & Namkeen (Bikaji)
+      MenuItem(id: '31', name: 'Bikaji Bhujia (200g)', sku: 'PKG-01', price: 65, category: 'Packaged Snacks', isPackaged: true),
+      MenuItem(id: '32', name: 'Bikaji All-in-One (200g)', sku: 'PKG-02', price: 65, category: 'Packaged Snacks', isPackaged: true),
+      MenuItem(id: '33', name: 'Bikaji Navratna Mixture', sku: 'PKG-03', price: 65, category: 'Packaged Snacks', isPackaged: true),
+      MenuItem(id: '34', name: 'Parle-G Biscuit Pack', sku: 'PKG-04', price: 10, category: 'Packaged Snacks', isPackaged: true),
+      MenuItem(id: '35', name: 'Britannia Good Day Butter', sku: 'PKG-05', price: 25, category: 'Packaged Snacks', isPackaged: true),
 
-    // Beverages & Cold Drinks
-    MenuItem(id: '36', name: 'Packaged Mineral Water (1L)', sku: 'BEV-01', price: 20, category: 'Beverages', isPackaged: true),
-    MenuItem(id: '37', name: 'Thums Up (250ml Can)', sku: 'BEV-02', price: 35, category: 'Beverages', isPackaged: true),
-    MenuItem(id: '38', name: 'Coca Cola (250ml Can)', sku: 'BEV-03', price: 35, category: 'Beverages', isPackaged: true),
-    MenuItem(id: '39', name: 'Cold Drink Bottle (750ml)', sku: 'BEV-04', price: 50, category: 'Beverages', isPackaged: true),
-    MenuItem(id: '40', name: 'Fresh Sweet Lassi', sku: 'BEV-05', price: 60, category: 'Beverages'),
-  ];
-});
+      // Beverages & Cold Drinks
+      MenuItem(id: '36', name: 'Packaged Mineral Water (1L)', sku: 'BEV-01', price: 20, category: 'Beverages', isPackaged: true),
+      MenuItem(id: '37', name: 'Thums Up (250ml Can)', sku: 'BEV-02', price: 35, category: 'Beverages', isPackaged: true),
+      MenuItem(id: '38', name: 'Coca Cola (250ml Can)', sku: 'BEV-03', price: 35, category: 'Beverages', isPackaged: true),
+      MenuItem(id: '39', name: 'Cold Drink Bottle (750ml)', sku: 'BEV-04', price: 50, category: 'Beverages', isPackaged: true),
+      MenuItem(id: '40', name: 'Fresh Sweet Lassi', sku: 'BEV-05', price: 60, category: 'Beverages'),
+    ];
+  }
+
+  void addItem(MenuItem item) {
+    state = [...state, item];
+  }
+
+  void updateItem(MenuItem updated) {
+    state = [
+      for (final item in state)
+        if (item.id == updated.id) updated else item,
+    ];
+  }
+
+  void deleteItem(String id) {
+    state = state.where((item) => item.id != id).toList();
+  }
+
+  void toggleAvailability(String id) {
+    state = [
+      for (final item in state)
+        if (item.id == id)
+          MenuItem(
+            id: item.id,
+            name: item.name,
+            sku: item.sku,
+            price: item.price,
+            category: item.category,
+            isPackaged: item.isPackaged,
+            isVeg: item.isVeg,
+            isAvailable: !item.isAvailable,
+          )
+        else
+          item,
+    ];
+  }
+}
+
+final menuProvider = NotifierProvider<MenuNotifier, List<MenuItem>>(MenuNotifier.new);
 
 // --- 4. ORDERS & CART PROVIDER ---
 class OrdersNotifier extends Notifier<Map<String, Order>> {

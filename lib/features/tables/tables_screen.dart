@@ -84,7 +84,7 @@ class TablesScreen extends ConsumerWidget {
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 280,
-                  mainAxisExtent: 195,
+                  mainAxisExtent: 200,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                 ),
@@ -144,25 +144,31 @@ class TablesScreen extends ConsumerWidget {
     Color statusBg;
     String statusText;
 
-    switch (table.status) {
-      case TableState.available:
-        statusColor = AppColors.statusAvailable;
-        statusBg = AppColors.statusAvailableBg;
-        statusText = 'AVAILABLE';
-        break;
-      case TableState.occupied:
-        statusColor = AppColors.statusOccupied;
-        statusBg = AppColors.statusOccupiedBg;
-        statusText = 'OCCUPIED';
-        break;
-      case TableState.billing:
-        statusColor = AppColors.statusBilling;
-        statusBg = AppColors.statusBillingBg;
-        statusText = 'BILL PENDING';
-        break;
+    if (!table.isEnabled) {
+      statusColor = Colors.grey.shade700;
+      statusBg = Colors.grey.shade200;
+      statusText = 'DISABLED / OFF';
+    } else {
+      switch (table.status) {
+        case TableState.available:
+          statusColor = AppColors.statusAvailable;
+          statusBg = AppColors.statusAvailableBg;
+          statusText = 'AVAILABLE';
+          break;
+        case TableState.occupied:
+          statusColor = AppColors.statusOccupied;
+          statusBg = AppColors.statusOccupiedBg;
+          statusText = 'OCCUPIED';
+          break;
+        case TableState.billing:
+          statusColor = AppColors.statusBilling;
+          statusBg = AppColors.statusBillingBg;
+          statusText = 'BILL PENDING';
+          break;
+      }
     }
 
-    final isOccupied = table.status != TableState.available && order != null;
+    final isOccupied = table.isEnabled && table.status != TableState.available && order != null;
     final elapsedMinutes = table.openedAt != null
         ? DateTime.now().difference(table.openedAt!).inMinutes
         : 0;
@@ -174,15 +180,23 @@ class TablesScreen extends ConsumerWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isOccupied
-              ? (isLongSitting ? AppColors.accent : statusColor.withValues(alpha: 0.6))
-              : AppColors.border,
+          color: !table.isEnabled
+              ? Colors.grey.shade400
+              : (isOccupied
+                  ? (isLongSitting ? AppColors.accent : statusColor.withValues(alpha: 0.6))
+                  : AppColors.border),
           width: isOccupied ? 1.5 : 1,
         ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
+          if (!table.isEnabled) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${table.tableNumber} is currently turned OFF. Turn it ON from the table menu.')),
+            );
+            return;
+          }
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => OrderScreen(tableNumber: table.tableNumber),
@@ -190,74 +204,125 @@ class TablesScreen extends ConsumerWidget {
           );
         },
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Header: Table Number & Status Pill
+              // Header: Table Number & Status Pill & Context Menu
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: isOccupied ? AppColors.secondary : AppColors.background,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           table.tableNumber,
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: isOccupied ? Colors.white : AppColors.textPrimary,
                           ),
                         ),
                       ),
                       if (isOccupied) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 5),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
                             color: isLongSitting ? AppColors.accentLight : AppColors.background,
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(color: isLongSitting ? AppColors.accent : AppColors.border),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.timer_outlined, size: 12, color: isLongSitting ? Colors.brown : AppColors.textSecondary),
-                              const SizedBox(width: 3),
-                              Text(
-                                '${elapsedMinutes}m',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: isLongSitting ? Colors.brown : AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            '⏱ ${elapsedMinutes}m',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: isLongSitting ? Colors.brown : AppColors.textSecondary,
+                            ),
                           ),
                         ),
                       ],
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusBg,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      statusText,
-                      style: TextStyle(
-                        color: statusColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                        letterSpacing: 0.5,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: statusBg,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          statusText,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 9.5,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
                       ),
-                    ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, size: 16, color: AppColors.textSecondary),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        splashRadius: 14,
+                        onSelected: (val) {
+                          if (val == 'toggle_enable') {
+                            ref.read(tablesProvider.notifier).toggleTableEnabled(table.tableNumber);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${table.tableNumber} is now ${table.isEnabled ? "DISABLED / OFF" : "ENABLED / ON"}'),
+                              ),
+                            );
+                          } else if (val == 'free_reset') {
+                            ref.read(tablesProvider.notifier).forceResetTable(table.tableNumber);
+                            ref.read(ordersProvider.notifier).removeOrder(table.tableNumber);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${table.tableNumber} has been freed and reset to Available!'),
+                                backgroundColor: AppColors.statusAvailable,
+                              ),
+                            );
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'free_reset',
+                            child: Row(
+                              children: const [
+                                Icon(Icons.refresh, size: 18, color: Colors.blue),
+                                SizedBox(width: 8),
+                                Text('Free / Reset Table'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'toggle_enable',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  table.isEnabled ? Icons.block : Icons.check_circle_outline,
+                                  size: 18,
+                                  color: table.isEnabled ? Colors.red : Colors.green,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(table.isEnabled ? 'Turn Table OFF' : 'Turn Table ON'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
