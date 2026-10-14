@@ -10,6 +10,7 @@ class RestaurantTable {
   final TableState status;
   final String? activeOrderId;
   final int guestCount;
+  final DateTime? openedAt;
 
   RestaurantTable({
     required this.id,
@@ -18,12 +19,14 @@ class RestaurantTable {
     this.status = TableState.available,
     this.activeOrderId,
     this.guestCount = 0,
+    this.openedAt,
   });
 
   RestaurantTable copyWith({
     TableState? status,
     String? activeOrderId,
     int? guestCount,
+    DateTime? openedAt,
   }) {
     return RestaurantTable(
       id: id,
@@ -32,6 +35,7 @@ class RestaurantTable {
       status: status ?? this.status,
       activeOrderId: activeOrderId ?? this.activeOrderId,
       guestCount: guestCount ?? this.guestCount,
+      openedAt: openedAt ?? this.openedAt,
     );
   }
 }

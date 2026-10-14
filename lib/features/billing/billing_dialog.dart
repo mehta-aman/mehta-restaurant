@@ -29,7 +29,7 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
     super.initState();
     _nameController = TextEditingController(text: widget.order.customerName ?? '');
     _phoneController = TextEditingController(text: widget.order.customerPhone ?? '');
-    
+
     // Default to full UPI
     _cashController = TextEditingController(text: '0');
     _upiController = TextEditingController(text: widget.order.grandTotal.toStringAsFixed(0));
@@ -61,13 +61,14 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
     final allocated = cash + upi + credit;
     final remaining = total - allocated;
 
-    final isBalanced = (remaining.abs() < 0.01);
+    final isBalanced = (remaining.abs() < 0.01) || (cash > total && upi == 0 && credit == 0);
+    final changeDue = cash > total ? cash - total : 0.0;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
-        width: 520,
-        padding: const EdgeInsets.all(24),
+        width: 560,
+        padding: const EdgeInsets.all(26),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -81,7 +82,7 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Settlement & Bill - ${widget.order.tableNumber}',
+                        'Settlement & Bill • ${widget.order.tableNumber}',
                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       Text(
@@ -100,7 +101,7 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
 
               // Customer Details
               const Text(
-                'Customer Information (Required for Credit Ledger)',
+                'Customer Details (Required if adding to Credit / Khata)',
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
               ),
               const SizedBox(height: 8),
@@ -132,15 +133,15 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
               // Summary Box
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight.withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                  color: AppColors.primaryLight.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                 ),
                 child: Column(
                   children: [
@@ -166,21 +167,57 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Total Bill Amount:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text('₹${total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                        Text('₹${total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primary)),
                       ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
-              // Multi-tender Split Payment Inputs
-              const Text(
-                'Payment Tender Breakdown (Split Accepted)',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              // 1-Tap Quick Tender Chips
+              Row(
+                children: [
+                  ActionChip(
+                    avatar: const Icon(Icons.qr_code, size: 16),
+                    label: const Text('Full UPI'),
+                    onPressed: () {
+                      setState(() {
+                        _cashController.text = '0';
+                        _upiController.text = total.toStringAsFixed(0);
+                        _creditController.text = '0';
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  ActionChip(
+                    avatar: const Icon(Icons.payments_outlined, size: 16),
+                    label: const Text('Exact Cash'),
+                    onPressed: () {
+                      setState(() {
+                        _cashController.text = total.toStringAsFixed(0);
+                        _upiController.text = '0';
+                        _creditController.text = '0';
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  ActionChip(
+                    avatar: const Icon(Icons.account_balance_wallet_outlined, size: 16),
+                    label: const Text('Full Credit'),
+                    onPressed: () {
+                      setState(() {
+                        _cashController.text = '0';
+                        _upiController.text = '0';
+                        _creditController.text = total.toStringAsFixed(0);
+                      });
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
 
+              // Multi-tender Inputs
               Row(
                 children: [
                   // Cash
@@ -190,7 +227,7 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
                       keyboardType: TextInputType.number,
                       onChanged: (_) => _calculateSplit(),
                       decoration: const InputDecoration(
-                        labelText: 'Cash (₹)',
+                        labelText: 'Cash Received (₹)',
                         isDense: true,
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.payments_outlined, size: 20),
@@ -229,17 +266,60 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
 
-              // Balance Validation Indicator
-              if (!isBalanced)
+              // Quick Cash Denomination buttons for Cashiers
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    const Text('Cash Notes: ', style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                    _buildNoteChip(100),
+                    _buildNoteChip(200),
+                    _buildNoteChip(500),
+                    _buildNoteChip(2000),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Change Return or Balance Alert
+              if (changeDue > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.green.shade300),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.change_circle_outlined, color: Colors.green.shade800),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Return Change to Customer:',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade900),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '₹${changeDue.toStringAsFixed(2)}',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green.shade800),
+                      ),
+                    ],
+                  ),
+                )
+              else if (!isBalanced)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
                     remaining > 0
-                      ? '⚠️ ₹${remaining.toStringAsFixed(2)} remaining to be allocated'
-                      : '⚠️ Over-allocated by ₹${(-remaining).toStringAsFixed(2)}',
-                    style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w600),
+                        ? '⚠️ ₹${remaining.toStringAsFixed(2)} remaining to be allocated'
+                        : '⚠️ Over-allocated by ₹${(-remaining).toStringAsFixed(2)}',
+                    style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold),
                   ),
                 ),
 
@@ -266,17 +346,16 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
                             if (credit > 0 && (custName.isEmpty || custPhone.isEmpty)) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Customer Name & Phone are required to record a Credit / Khata entry!'),
+                                  content: Text('Customer Name & Phone are required for Credit / Khata!'),
                                   backgroundColor: Colors.red,
                                 ),
                               );
                               return;
                             }
 
-                            // 1. Generate Invoice Number
                             final invNumber = ref.read(settingsProvider.notifier).getNextInvoiceNumber();
+                            final netCash = cash > total ? total : cash;
 
-                            // 2. Create Invoice Record
                             final invoice = Invoice(
                               id: _uuid.v4(),
                               invoiceNumber: invNumber,
@@ -287,14 +366,13 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
                               subtotal: widget.order.subtotal,
                               taxAmount: widget.order.taxAmount,
                               grandTotal: total,
-                              cashPaid: cash,
+                              cashPaid: netCash,
                               upiPaid: upi,
                               creditAmount: credit,
                             );
 
                             ref.read(invoicesProvider.notifier).addInvoice(invoice);
 
-                            // 3. If credit allocated, append to immutable Customer Ledger
                             if (credit > 0) {
                               final customer = ref.read(customersProvider.notifier).getOrCreate(custName, custPhone);
                               ref.read(ledgerProvider.notifier).addEntry(
@@ -305,25 +383,22 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
                                   amount: credit,
                                   referenceType: 'INVOICE',
                                   referenceNumber: invNumber,
-                                  description: 'Dining bill credit - ${widget.order.tableNumber}',
+                                  description: 'Dining bill credit • ${widget.order.tableNumber}',
                                 ),
                               );
                             }
 
-                            // 4. Release Table and Clear Order
                             ref.read(tablesProvider.notifier).releaseTable(widget.order.tableNumber);
                             ref.read(ordersProvider.notifier).removeOrder(widget.order.tableNumber);
 
                             Navigator.of(context).pop();
 
-                            // 5. Open Thermal Print Preview
                             await PrinterService.printReceipt(invoice: invoice, settings: settings);
 
-                            // 6. Optional: WhatsApp bill share
                             if (custPhone.isNotEmpty && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Bill $invNumber generated successfully!'),
+                                  content: Text('Bill $invNumber printed!'),
                                   action: SnackBarAction(
                                     label: 'WhatsApp Receipt',
                                     textColor: Colors.white,
@@ -333,7 +408,7 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
                                         customerName: custName,
                                         invoiceNumber: invNumber,
                                         totalAmount: total,
-                                        paidAmount: cash + upi,
+                                        paidAmount: netCash + upi,
                                         balanceDue: credit,
                                         restaurantName: settings.restaurantName,
                                       );
@@ -349,6 +424,22 @@ class _BillingDialogState extends ConsumerState<BillingDialog> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildNoteChip(int amount) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: ActionChip(
+        label: Text('+₹$amount'),
+        backgroundColor: AppColors.background,
+        onPressed: () {
+          final current = double.tryParse(_cashController.text) ?? 0.0;
+          setState(() {
+            _cashController.text = (current + amount).toStringAsFixed(0);
+          });
+        },
       ),
     );
   }

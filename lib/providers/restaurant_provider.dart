@@ -63,6 +63,7 @@ class TablesNotifier extends Notifier<List<RestaurantTable>> {
             status: TableState.occupied,
             guestCount: guests,
             activeOrderId: orderId,
+            openedAt: table.openedAt ?? DateTime.now(),
           )
         else
           table,
