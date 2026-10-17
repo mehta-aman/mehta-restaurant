@@ -483,43 +483,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
       ),
       child: Row(
         children: [
-          // Search Field matching reference
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 420),
-                height: 38,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurface : AppColors.surfaceSecondary,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.border,
-                  ),
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search customers, orders, menu items...',
-                    hintStyle: TextStyle(
-                      fontSize: 12.5,
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      size: 18,
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted,
-                    ),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 9),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 16),
+          const Spacer(),
 
           // Notification Bell
           IconButton(
