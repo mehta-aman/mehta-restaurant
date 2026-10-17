@@ -1,0 +1,36 @@
+name: Deploy to Firebase Hosting on Push
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Flutter Web Release
+        run: |
+          flutter build web --release \
+            --dart-define=SUPABASE_URL=https://esjlwtlaqmnjlyctbjgm.supabase.co \
+            --dart-define=SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzamx3dGxhcW1uamx5Y3RiamdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5NzkwODksImV4cCI6MjEwNzU1NTA4OX0.Nv-OOvwv5n_BscP4UXaxcBopoxgF3QQReSAxQZKLYbw
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MEHTA_RESTAURANT }}
+          channelId: live
+          projectId: mehta-restaurant
