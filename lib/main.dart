@@ -489,45 +489,43 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
         children: [
           const Spacer(),
 
-          // AI Assistant Header Shortcut for Owner & Manager
-          if (currentStaff.role == StaffRole.owner || currentStaff.role == StaffRole.manager) ...[
-            InkWell(
-              onTap: () => AiAssistantSheet.show(context),
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+          // AI Assistant Header Shortcut
+          InkWell(
+            onTap: () => AiAssistantSheet.show(context),
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF6366F1).withValues(alpha: 0.25),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
+                ],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.auto_awesome, color: Colors.white, size: 14),
+                  SizedBox(width: 6),
+                  Text(
+                    'Ask AI',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.auto_awesome, color: Colors.white, size: 14),
-                    SizedBox(width: 6),
-                    Text(
-                      'Ask AI',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-          ],
+          ),
+          const SizedBox(width: 8),
 
           // Notification Bell
           IconButton(

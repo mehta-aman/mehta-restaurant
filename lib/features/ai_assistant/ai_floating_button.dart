@@ -2,8 +2,6 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../models/models.dart';
-import '../../providers/restaurant_provider.dart';
 import 'ai_assistant_sheet.dart';
 
 class AiFloatingButton extends ConsumerStatefulWidget {
@@ -41,11 +39,6 @@ class _AiFloatingButtonState extends ConsumerState<AiFloatingButton> with Single
 
   @override
   Widget build(BuildContext context) {
-    final currentStaff = ref.watch(currentStaffProvider);
-    // Allow Owner and Manager roles full AI powers
-    final hasAiAccess = currentStaff.role == StaffRole.owner || currentStaff.role == StaffRole.manager;
-    if (!hasAiAccess) return const SizedBox.shrink();
-
     final isDesktop = MediaQuery.of(context).size.width >= 900;
 
     return AnimatedBuilder(
@@ -66,8 +59,8 @@ class _AiFloatingButtonState extends ConsumerState<AiFloatingButton> with Single
           borderRadius: BorderRadius.circular(28),
           child: Container(
             padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 16 : 14,
-              vertical: 12,
+              horizontal: isDesktop ? 18 : 14,
+              vertical: isDesktop ? 12 : 10,
             ),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -77,12 +70,12 @@ class _AiFloatingButtonState extends ConsumerState<AiFloatingButton> with Single
               ),
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
+                color: Colors.white.withValues(alpha: 0.35),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF6366F1).withValues(alpha: 0.4),
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.45),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -96,18 +89,16 @@ class _AiFloatingButtonState extends ConsumerState<AiFloatingButton> with Single
                   color: Colors.white,
                   size: 20,
                 ),
-                if (isDesktop) ...[
-                  const SizedBox(width: 8),
-                  const Text(
-                    'AI Assistant',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.3,
-                    ),
+                const SizedBox(width: 8),
+                Text(
+                  isDesktop ? 'AI Assistant' : 'Ask AI',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
                   ),
-                ],
+                ),
               ],
             ),
           ),
