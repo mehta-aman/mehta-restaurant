@@ -19,6 +19,9 @@ migrate_working_dir/
 !.env.example
 *.pem
 *.key
+*service_account*.json
+firebase-key.json
+service-account*.json
 
 # IntelliJ related
 *.iml
