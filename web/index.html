@@ -41,6 +41,92 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <!-- Mehta Voice Assistant: Speech-to-Text & Text-to-Speech Web Bridge -->
+  <script>
+    window.mehtaVoice = {
+      recognition: null,
+      isListening: false,
+      isSupported: function() {
+        return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+      },
+      startListening: function(lang) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          window.dispatchEvent(new CustomEvent('mehta_voice_error', { detail: 'Speech recognition is not supported in this browser' }));
+          return false;
+        }
+        try {
+          if (this.recognition) {
+            this.recognition.abort();
+          }
+          this.recognition = new SpeechRecognition();
+          this.recognition.continuous = false;
+          this.recognition.interimResults = true;
+          this.recognition.lang = lang || 'en-IN';
+
+          this.recognition.onstart = () => {
+            this.isListening = true;
+            window.dispatchEvent(new CustomEvent('mehta_voice_start'));
+          };
+
+          this.recognition.onresult = (event) => {
+            let transcript = '';
+            let isFinal = false;
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              transcript += event.results[i][0].transcript;
+              if (event.results[i].isFinal) isFinal = true;
+            }
+            window.dispatchEvent(new CustomEvent('mehta_voice_result', { detail: { text: transcript, isFinal: isFinal } }));
+          };
+
+          this.recognition.onerror = (event) => {
+            this.isListening = false;
+            window.dispatchEvent(new CustomEvent('mehta_voice_error', { detail: event.error }));
+          };
+
+          this.recognition.onend = () => {
+            this.isListening = false;
+            window.dispatchEvent(new CustomEvent('mehta_voice_end'));
+          };
+
+          this.recognition.start();
+          return true;
+        } catch (e) {
+          console.error('Speech recognition start failed:', e);
+          window.dispatchEvent(new CustomEvent('mehta_voice_error', { detail: e.message || 'Error' }));
+          return false;
+        }
+      },
+      stopListening: function() {
+        if (this.recognition) {
+          try {
+            this.recognition.stop();
+          } catch(e) {}
+        }
+        this.isListening = false;
+      },
+      speak: function(text) {
+        if (!('speechSynthesis' in window)) return false;
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 1.05;
+          utterance.pitch = 1.0;
+          utterance.lang = 'en-IN';
+          window.speechSynthesis.speak(utterance);
+          return true;
+        } catch (e) {
+          console.error('Speech synthesis error:', e);
+          return false;
+        }
+      },
+      stopSpeaking: function() {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+      }
+    };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

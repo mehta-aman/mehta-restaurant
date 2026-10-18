@@ -12,6 +12,8 @@ import 'features/staff/staff_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/bills/bills_screen.dart';
 import 'features/staff/staff_switch_dialog.dart';
+import 'features/ai_assistant/ai_floating_button.dart';
+import 'features/ai_assistant/ai_assistant_sheet.dart';
 import 'providers/restaurant_provider.dart';
 import 'services/supabase_service.dart';
 
@@ -111,6 +113,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     if (isDesktop || isTablet) {
       return Scaffold(
         backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+        floatingActionButton: const AiFloatingButton(),
         body: Row(
           children: [
             // Dark Sidebar Navigation matching reference
@@ -144,6 +147,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     // Responsive Mobile (iPhone) Bottom Navigation Shell matching reference
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+      floatingActionButton: const AiFloatingButton(),
       body: screens[safeIndex],
       bottomNavigationBar: NavigationBar(
         height: 64,
@@ -484,6 +488,46 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
       child: Row(
         children: [
           const Spacer(),
+
+          // AI Assistant Header Shortcut for Owner & Manager
+          if (currentStaff.role == StaffRole.owner || currentStaff.role == StaffRole.manager) ...[
+            InkWell(
+              onTap: () => AiAssistantSheet.show(context),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.auto_awesome, color: Colors.white, size: 14),
+                    SizedBox(width: 6),
+                    Text(
+                      'Ask AI',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
 
           // Notification Bell
           IconButton(
