@@ -17,7 +17,7 @@ echo "================================================"
 echo "☁️  Deploying to Firebase Hosting..."
 echo "================================================"
 
-npx firebase-tools deploy --only hosting
+GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-firebase-key.json}" npx firebase-tools deploy --only hosting
 
 echo ""
 echo "================================================"
