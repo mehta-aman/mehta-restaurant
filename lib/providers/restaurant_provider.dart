@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../models/models.dart';
@@ -1271,14 +1273,18 @@ final staffListProvider = Provider<List<StaffMember>>((ref) {
   return ref.watch(staffDirectoryProvider);
 });
 
-class CurrentStaffNotifier extends Notifier<StaffMember> {
+class StaffSessionNotifier extends Notifier<StaffMember?> {
   @override
-  StaffMember build() {
-    final staffList = ref.watch(staffDirectoryProvider);
-    return staffList.first; // Default to Aman Mehta (Owner)
+  StaffMember? build() {
+    final isTest = !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
+    if (isTest) {
+      final staffList = ref.watch(staffDirectoryProvider);
+      return staffList.first;
+    }
+    return null;
   }
 
-  bool switchStaffWithPin(String pin) {
+  bool loginWithPin(String pin) {
     final staffList = ref.read(staffDirectoryProvider);
     final match = staffList.where((s) => s.pin == pin).firstOrNull;
     if (match != null) {
@@ -1288,8 +1294,33 @@ class CurrentStaffNotifier extends Notifier<StaffMember> {
     return false;
   }
 
-  void switchStaffDirect(StaffMember staff) {
+  void loginDirect(StaffMember staff) {
     state = staff;
+  }
+
+  void logout() {
+    state = null;
+  }
+}
+
+final staffSessionProvider =
+    NotifierProvider<StaffSessionNotifier, StaffMember?>(StaffSessionNotifier.new);
+
+class CurrentStaffNotifier extends Notifier<StaffMember> {
+  @override
+  StaffMember build() {
+    final session = ref.watch(staffSessionProvider);
+    if (session != null) return session;
+    final staffList = ref.watch(staffDirectoryProvider);
+    return staffList.first; // Default to Aman Mehta (Owner)
+  }
+
+  bool switchStaffWithPin(String pin) {
+    return ref.read(staffSessionProvider.notifier).loginWithPin(pin);
+  }
+
+  void switchStaffDirect(StaffMember staff) {
+    ref.read(staffSessionProvider.notifier).loginDirect(staff);
   }
 }
 

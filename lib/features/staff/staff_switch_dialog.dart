@@ -214,6 +214,29 @@ class _StaffSwitchDialogState extends ConsumerState<StaffSwitchDialog> {
                   );
                 },
               ),
+              const SizedBox(height: 14),
+              const Divider(height: 1),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      ref.read(staffSessionProvider.notifier).logout();
+                    },
+                    icon: const Icon(Icons.lock_outline_rounded, color: Colors.redAccent, size: 16),
+                    label: const Text(
+                      'Lock Terminal / Sign Out',
+                      style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
+import 'ai/ai_models.dart';
 
 class SupabaseService {
   static SupabaseClient? _client;
@@ -1122,6 +1123,53 @@ class SupabaseService {
       _realtimeChannel?.unsubscribe();
       _realtimeChannel = null;
     } catch (_) {}
+  }
+
+  // --- 10. AI AUDIT LOGS & BATCH OPERATIONS ---
+  static Future<bool> recordAiAuditLog(AiAuditLogEntry entry) async {
+    if (!isInitialized) return false;
+    try {
+      await _client!.from('ai_audit_logs').insert({
+        'id': entry.id,
+        'staff_id': entry.staffId,
+        'staff_name': entry.staffName,
+        'staff_role': entry.staffRole.name,
+        'tool_name': entry.toolName,
+        'arguments': entry.arguments,
+        'success': entry.success,
+        'error_message': entry.errorMessage,
+        'user_prompt': entry.userPrompt,
+        'created_at': entry.timestamp.toIso8601String(),
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Error recording AI audit log: $e');
+      return false;
+    }
+  }
+
+  static Future<Map<String, dynamic>> importMenuItemsBatch({
+    required List<Map<String, dynamic>> items,
+    String mode = 'upsert',
+    String? staffId,
+  }) async {
+    if (!isInitialized) {
+      return {'success': false, 'message': 'Supabase not initialized'};
+    }
+    try {
+      final res = await _client!.rpc('import_menu_items_batch', params: {
+        'p_items': items,
+        'p_mode': mode,
+        'p_staff_id': staffId,
+      });
+      if (res is Map<String, dynamic>) {
+        return res;
+      }
+      return {'success': true, 'data': res};
+    } catch (e) {
+      debugPrint('Error calling import_menu_items_batch RPC: $e');
+      return {'success': false, 'message': e.toString()};
+    }
   }
 }
 

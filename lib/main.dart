@@ -12,6 +12,7 @@ import 'features/staff/staff_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/bills/bills_screen.dart';
 import 'features/staff/staff_switch_dialog.dart';
+import 'features/staff/staff_login_window.dart';
 import 'features/ai_assistant/ai_floating_button.dart';
 import 'features/ai_assistant/ai_assistant_sheet.dart';
 import 'providers/restaurant_provider.dart';
@@ -84,6 +85,21 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
+    final activeStaff = ref.watch(staffSessionProvider);
+    if (activeStaff == null) {
+      return StaffLoginWindow(
+        onLoginSuccess: (staff) {
+          if (staff.role == StaffRole.kitchen) {
+            setState(() => _currentIndex = 2);
+          } else if (staff.role == StaffRole.waiter) {
+            setState(() => _currentIndex = 1);
+          } else {
+            setState(() => _currentIndex = 0);
+          }
+        },
+      );
+    }
+
     final tickets = ref.watch(kitchenTicketsProvider);
     final activeKotCount = tickets.where((t) => t.status != KotState.served).length;
     final screenWidth = MediaQuery.of(context).size.width;
@@ -449,6 +465,31 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 6),
+                  InkWell(
+                    onTap: () {
+                      ref.read(staffSessionProvider.notifier).logout();
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.lock_outline_rounded, size: 13, color: Colors.redAccent),
+                          SizedBox(width: 6),
+                          Text(
+                            'Lock Terminal',
+                            style: TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ] else ...[
                   IconButton(
                     icon: Text(currentStaff.avatarIcon, style: const TextStyle(fontSize: 18)),
@@ -457,6 +498,13 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                       context: context,
                       builder: (_) => const StaffSwitchDialog(),
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.lock_outline_rounded, size: 18, color: Colors.redAccent),
+                    tooltip: 'Lock Terminal',
+                    onPressed: () {
+                      ref.read(staffSessionProvider.notifier).logout();
+                    },
                   ),
                 ],
               ],
@@ -603,7 +651,18 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
             ),
           ),
 
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
+
+          // Lock Terminal Button
+          IconButton(
+            icon: const Icon(Icons.lock_outline_rounded, size: 20),
+            tooltip: 'Lock Terminal / Sign Out',
+            onPressed: () {
+              ref.read(staffSessionProvider.notifier).logout();
+            },
+          ),
+
+          const SizedBox(width: 4),
 
           // Theme Toggle
           IconButton(
@@ -669,6 +728,18 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                     },
                   );
                 }),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.lock_outline_rounded, color: Colors.redAccent),
+                  title: const Text(
+                    'Lock Terminal / Sign Out',
+                    style: TextStyle(fontWeight: FontWeight.w600, color: Colors.redAccent),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    ref.read(staffSessionProvider.notifier).logout();
+                  },
+                ),
               ],
             ),
           ),
